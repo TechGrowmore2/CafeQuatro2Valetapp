@@ -151,24 +151,46 @@ class WhatsAppService {
   }
 
   /**
-   * Booking confirmation — no dedicated WhatsApp template for this yet.
-   * Falls back to a generic sendTemplate call if a template is added later.
-   * For now, this is a no-op / mock only.
-   *
-   * NOTE: If a cafe_quattro_booking_confirmation_* template is registered,
-   * replace the template name and variables below.
+   * Template: cafe_quattro_booking_confirmation_20260731005736
+   * Category: UTILITY - APPROVED
+   * Body variables: {{1}} = customerName, {{2}} = bookingId
+   * Button (index 0): URL suffix = accessToken (Track my car)
    */
   async sendBookingConfirmation(phone, customerName, bookingId, accessToken) {
     const to = this._formatPhone(phone);
-    // No approved booking confirmation template yet for Cafe Quattro.
-    // Log it in mock mode so we can verify the call reaches here.
-    console.log('\n📲 MOCK WhatsApp (Cafe Quattro Babulnath Valet) — Booking Confirmation:');
-    console.log(`   To         : ${to}`);
-    console.log(`   CustomerName: ${customerName}`);
-    console.log(`   BookingId  : ${bookingId}`);
-    console.log(`   AccessToken: ${accessToken}`);
-    console.log('─────────────────────────────\n');
-    return { success: true, mock: true };
+
+    if (this.enabled) {
+      const payload = {
+        recipient_mobile_number: to,
+        customer_name: customerName || 'Customer',
+        messages: [{
+          kind: 'template',
+          template: {
+            name: 'cafe_quattro_booking_confirmation_20260731005736',
+            language: 'en_US',
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: String(customerName || 'Guest') },
+                  { type: 'text', text: String(bookingId) }
+                ]
+              },
+              {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [{ type: 'text', text: String(accessToken) }]
+              }
+            ]
+          }
+        }]
+      };
+      return this._post(payload, 'cafe_quattro_booking_confirmation_20260731005736');
+    } else {
+      console.log('\n📲 MOCK WhatsApp Booking Confirmation (Cafe Quattro): ' + bookingId + ' to ' + phone + '\n');
+      return { success: true, mock: true };
+    }
   }
 
   /**
