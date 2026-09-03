@@ -151,7 +151,7 @@ class WhatsAppService {
   }
 
   /**
-   * Template: cafe_quattro_booking_confirmation_20260731005736
+   * Template: cafe_quattro2_booking_confirmation_20260904010926
    * Category: UTILITY - APPROVED
    * Body variables: {{1}} = customerName, {{2}} = bookingId
    * Button (index 0): URL suffix = accessToken (Track my car)
@@ -166,7 +166,7 @@ class WhatsAppService {
         messages: [{
           kind: 'template',
           template: {
-            name: 'cafe_quattro_booking_confirmation_20260731005736',
+            name: 'cafe_quattro2_booking_confirmation_20260904010926',
             language: 'en_US',
             components: [
               {
@@ -186,7 +186,7 @@ class WhatsAppService {
           }
         }]
       };
-      return this._post(payload, 'cafe_quattro_booking_confirmation_20260731005736');
+      return this._post(payload, 'cafe_quattro2_booking_confirmation_20260904010926');
     } else {
       console.log('\n📲 MOCK WhatsApp Booking Confirmation (Cafe Quattro): ' + bookingId + ' to ' + phone + '\n');
       return { success: true, mock: true };
