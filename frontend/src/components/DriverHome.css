@@ -1,0 +1,271 @@
+.driver-home-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.welcome-section {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.welcome-icon {
+  margin-bottom: 20px;
+}
+
+.welcome-section h1 {
+  font-size: 36px;
+  color: #1A1A1A;
+  margin: 0 0 10px;
+  font-weight: 800;
+}
+
+.welcome-section p {
+  font-size: 18px;
+  color: #666;
+  margin: 0;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.action-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.action-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.action-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.action-card h3 {
+  font-size: 22px;
+  color: #1A1A1A;
+  margin: 0 0 10px;
+  font-weight: 700;
+}
+
+.action-card p {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.tips-section {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid #FF6B35;
+}
+
+.tips-section h3 {
+  font-size: 20px;
+  color: #1A1A1A;
+  margin: 0 0 20px;
+  font-weight: 700;
+}
+
+.tips-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tips-section li {
+  padding: 12px 0;
+  padding-left: 30px;
+  position: relative;
+  color: #666;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.tips-section li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #10B981;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* ---- QR Code Section ---- */
+.qr-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-left: 5px solid #FF6B35;
+  margin-bottom: 40px;
+}
+
+.qr-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.qr-section-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1A1A2E;
+  margin: 0 0 4px;
+}
+
+.qr-section-header p {
+  font-size: 13px;
+  color: #6B7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.qr-body {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.qr-image-wrap {
+  width: 140px;
+  height: 140px;
+  background: #FFF5F2;
+  border-radius: 12px;
+  padding: 8px;
+  border: 2px solid rgba(255, 107, 53, 0.15);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.qr-link-section {
+  flex: 1;
+  min-width: 200px;
+}
+
+.qr-link-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9CA3AF;
+  margin-bottom: 8px;
+}
+
+.qr-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.qr-link-text {
+  font-size: 12px;
+  color: #374151;
+  word-break: break-all;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.qr-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: white;
+  border: 2px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+}
+
+.qr-copy-btn:hover {
+  border-color: #FF6B35;
+  color: #FF6B35;
+}
+
+.qr-open-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #3B82F6;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+
+.qr-open-link:hover { opacity: 0.7; }
+
+.qr-tip {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #FFF5F2;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.5;
+  border: 0;
+}
+
+@media (max-width: 768px) {
+  .welcome-section h1 {
+    font-size: 28px;
+  }
+  
+  .welcome-section p {
+    font-size: 16px;
+  }
+  
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-body {
+    flex-direction: column;
+  }
+
+  .qr-image-wrap {
+    width: 100%;
+    height: 180px;
+  }
+}

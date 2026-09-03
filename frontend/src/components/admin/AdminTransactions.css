@@ -1,0 +1,462 @@
+/* ===== ADMIN TRANSACTIONS DASHBOARD ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.atx-container {
+  padding: 28px;
+  font-family: 'Inter', sans-serif;
+  max-width: 1200px;
+}
+
+/* ── Header ── */
+.atx-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 16px;
+}
+
+.atx-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1A1A2E;
+  margin: 0 0 4px;
+}
+
+.atx-header p {
+  font-size: 13px;
+  color: #6B7280;
+  margin: 0;
+}
+
+.atx-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border: 2px solid #E5E7EB;
+  border-radius: 10px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.atx-refresh-btn:hover:not(:disabled) {
+  border-color: #6366F1;
+  color: #6366F1;
+}
+
+/* ── Summary Cards ── */
+.atx-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.atx-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  border: 1px solid #F3F4F6;
+  border-top: 3px solid var(--card-accent, #6366F1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.atx-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+}
+
+.atx-card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.atx-card-label {
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+  margin: 0 0 4px;
+}
+
+.atx-card-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #1A1A2E;
+  margin: 0 0 3px;
+}
+
+.atx-card-sub {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+/* ── Payment Status Row ── */
+.atx-status-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.atx-status-card {
+  background: white;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  border: 1px solid #F3F4F6;
+}
+
+.atx-status-card.success { border-left: 4px solid #10B981; }
+.atx-status-card.failed  { border-left: 4px solid #EF4444; }
+.atx-status-card.pending { border-left: 4px solid #F59E0B; }
+
+.atx-status-count {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  color: #1A1A2E;
+  line-height: 1;
+}
+
+.atx-status-label {
+  display: block;
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: 500;
+  margin: 3px 0;
+}
+
+.atx-status-amount {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+/* ── Analytics Row ── */
+.atx-analytics-row {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ── Chart Card ── */
+.atx-chart-card {
+  background: white;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  border: 1px solid #F3F4F6;
+  overflow: hidden;
+}
+
+.atx-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.atx-chart-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A2E;
+  margin: 0;
+}
+
+.atx-chart-tabs {
+  display: flex;
+  gap: 4px;
+  background: #F3F4F6;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.atx-tab {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  background: transparent;
+  color: #6B7280;
+  transition: all 0.2s;
+}
+
+.atx-tab.active {
+  background: white;
+  color: #6366F1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.atx-chart-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.atx-chart-legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #6B7280;
+}
+
+.atx-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 4px;
+}
+
+.atx-empty-chart {
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9CA3AF;
+  font-size: 13px;
+}
+
+/* ── Method Card ── */
+.atx-method-card {
+  background: white;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  border: 1px solid #F3F4F6;
+}
+
+.atx-method-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A2E;
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.atx-donut-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.atx-method-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.atx-method-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.atx-method-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.atx-method-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.atx-method-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.atx-method-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.atx-method-amount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A1A2E;
+}
+
+.atx-method-count {
+  font-size: 10px;
+  color: #9CA3AF;
+}
+
+/* ── Transactions Table ── */
+.atx-table-card {
+  background: white;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+  border: 1px solid #F3F4F6;
+}
+
+.atx-table-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A2E;
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.atx-table-wrap {
+  overflow-x: auto;
+}
+
+.atx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.atx-table th {
+  background: #F8F9FA;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6B7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #E5E7EB;
+  white-space: nowrap;
+}
+
+.atx-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #F3F4F6;
+  vertical-align: middle;
+}
+
+.atx-table tr:hover td { background: #FAFAFA; }
+
+.atx-booking-id {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6366F1;
+  font-family: monospace;
+}
+
+.atx-customer-name {
+  display: block;
+  font-weight: 600;
+  color: #1A1A2E;
+  font-size: 13px;
+}
+
+.atx-customer-phone {
+  display: block;
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.atx-amount {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A2E;
+}
+
+.atx-method-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.atx-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.atx-badge-success { background: #F0FDF4; color: #065F46; border: 1px solid #BBF7D0; }
+.atx-badge-failed  { background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+.atx-badge-pending { background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+
+.atx-date {
+  font-size: 11px;
+  color: #6B7280;
+  white-space: nowrap;
+}
+
+.atx-empty-row {
+  text-align: center;
+  color: #9CA3AF;
+  font-size: 13px;
+  padding: 28px !important;
+}
+
+.atx-empty {
+  font-size: 12px;
+  color: #9CA3AF;
+  text-align: center;
+  padding: 12px;
+}
+
+/* ── Skeleton loading ── */
+.atx-loading-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 28px;
+}
+
+.atx-skeleton {
+  height: 120px;
+  border-radius: 16px;
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: atx-shimmer 1.5s infinite;
+}
+
+@keyframes atx-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 900px) {
+  .atx-analytics-row { grid-template-columns: 1fr; }
+  .atx-status-row { grid-template-columns: 1fr; }
+  .atx-container { padding: 16px; }
+}
