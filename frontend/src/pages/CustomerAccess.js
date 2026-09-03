@@ -45,7 +45,7 @@ const CustomerAccess = () => {
   }, [token, navigate, setUser]);
 
   return (
-    <div className="login-page" style={{ background: '#F2EFE9' }}>
+    <div className="login-page" style={{ background: '#F0FDF4' }}>
       <div className="login-container">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -55,7 +55,7 @@ const CustomerAccess = () => {
           style={{ textAlign: 'center', padding: '32px 24px' }}
         >
           <img src={growmoreLogo} alt="Growmore Parking Solutions" style={{ width: '140px', height: 'auto', objectFit: 'contain', marginBottom: '12px', display: 'block', margin: '0 auto 12px' }} />
-          <h2 style={{ fontFamily: "'Lora', serif", color: '#353535', marginBottom: '8px' }}>Cafe Quattro Babulnath Valet</h2>
+          <h2 style={{ fontFamily: "'Lora', serif", color: '#262938', marginBottom: '8px' }}>Cafe Quattro Babulnath Valet</h2>
 
           {loading && (
             <>
@@ -63,9 +63,9 @@ const CustomerAccess = () => {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                 style={{ margin: '24px auto', width: 40, height: 40, borderRadius: '50%',
-                         border: '3px solid #DDD8CC', borderTopColor: '#CC7722' }}
+                         border: '3px solid #DCFCE7', borderTopColor: '#00A859' }}
               />
-              <p style={{ color: '#7A6E63', fontSize: '14px' }}>Accessing your booking…</p>
+              <p style={{ color: '#64748B', fontSize: '14px' }}>Accessing your booking…</p>
             </>
           )}
 
@@ -91,10 +91,11 @@ const CustomerAccess = () => {
                   onClick={() => navigate('/customer/login')}
                   style={{
                     marginTop: '16px', padding: '11px 24px',
-                    background: 'linear-gradient(135deg, #CC7722, #D98D3A)',
+                    background: 'linear-gradient(135deg, #00A859, #008F4C)',
                     color: 'white', border: 'none', borderRadius: '10px',
                     fontSize: '14px', fontWeight: 700, fontFamily: "'Lato', sans-serif",
-                    cursor: 'pointer', width: '100%'
+                    cursor: 'pointer', width: '100%',
+                    boxShadow: '0 4px 14px rgba(0, 168, 89, 0.35)'
                   }}
                 >
                   Go to Login →

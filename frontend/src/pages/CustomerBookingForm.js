@@ -214,7 +214,7 @@ const CustomerBookingForm = () => {
           name: formData.customerName,
           contact: formData.customerPhone,
         },
-        theme: { color: '#FF6B35' },
+        theme: { color: '#00A859' },
         handler: async (response) => {
           try {
             const verify = await axios.post(`${API_URL}/api/payment/verify`, {
@@ -338,7 +338,7 @@ const CustomerBookingForm = () => {
             exit={{ opacity: 0 }}
             style={{
               position: 'fixed', inset: 0, zIndex: 1000,
-              background: 'rgba(53, 53, 53, 0.65)',
+              background: 'rgba(38, 41, 56, 0.7)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: '24px 16px',
             }}
@@ -354,8 +354,8 @@ const CustomerBookingForm = () => {
                 padding: '32px 28px 28px',
                 maxWidth: '420px',
                 width: '100%',
-                boxShadow: '0 20px 60px rgba(53,53,53,0.3)',
-                border: '2px solid rgba(204,119,34,0.18)',
+                boxShadow: '0 20px 60px rgba(38, 41, 56, 0.25)',
+                border: '2px solid rgba(0, 168, 89, 0.2)',
               }}
             >
               {/* Logo */}
@@ -364,28 +364,28 @@ const CustomerBookingForm = () => {
                 <h2 style={{
                   fontFamily: "'Lora', serif",
                   fontSize: '20px', fontWeight: 700,
-                  color: '#353535', margin: '0 0 4px',
+                  color: '#262938', margin: '0 0 4px',
                 }}>Welcome to Cafe Quattro Babulnath</h2>
-                <p style={{ fontSize: '13px', color: '#7A6E63', margin: 0 }}>Please read before proceeding</p>
+                <p style={{ fontSize: '13px', color: '#64748B', margin: 0 }}>Please read before proceeding</p>
               </div>
 
               {/* Message */}
               <div style={{
-                background: '#F9F7F3',
-                border: '1.5px solid rgba(204,119,34,0.2)',
+                background: '#F0FDF4',
+                border: '1.5px solid rgba(0, 168, 89, 0.25)',
                 borderRadius: '14px',
                 padding: '18px 20px',
                 marginBottom: '22px',
                 lineHeight: '1.75',
                 fontSize: '14px',
-                color: '#454039',
+                color: '#334155',
                 fontFamily: "'Lato', sans-serif",
               }}>
-                <p style={{ margin: '0 0 10px', fontWeight: 700, color: '#CC7722' }}>Thank you for visiting Cafe Quattro Babulnath.</p>
+                <p style={{ margin: '0 0 10px', fontWeight: 700, color: '#00A859' }}>Thank you for visiting Cafe Quattro Babulnath.</p>
                 <p style={{ margin: '0 0 8px' }}>Valet services are provided for your convenience. While every care is taken, <strong>Cafe Quattro Babulnath cannot be responsible for theft or damage to the vehicle.</strong></p>
                 <p style={{ margin: '0 0 8px' }}>Please ensure <strong>valuable items are safe with you</strong>, outside the car.</p>
                 <p style={{ margin: '0 0 8px' }}>Please allow us <strong>15 mins</strong> to bring the vehicle back to you.</p>
-                <p style={{ margin: 0, fontWeight: 700, color: '#CC7722' }}>Hope you enjoy your meal! 🍽️</p>
+                <p style={{ margin: 0, fontWeight: 700, color: '#00A859' }}>Hope you enjoy your meal! 🍽️</p>
               </div>
 
               {/* CTA Button */}
@@ -395,13 +395,13 @@ const CustomerBookingForm = () => {
                 }}
                 style={{
                   width: '100%', padding: '14px',
-                  background: 'linear-gradient(135deg, #CC7722, #D98D3A)',
+                  background: 'linear-gradient(135deg, #00A859, #008F4C)',
                   color: 'white', border: 'none',
                   borderRadius: '12px', fontSize: '16px',
                   fontWeight: 700, fontFamily: "'Lato', sans-serif",
                   cursor: 'pointer',
                   transition: 'all 0.25s',
-                  boxShadow: '0 4px 16px rgba(204,119,34,0.3)',
+                  boxShadow: '0 4px 18px rgba(0, 168, 89, 0.35)',
                 }}
               >
                 Got it, Proceed to Booking →
@@ -495,9 +495,9 @@ const CustomerBookingForm = () => {
                   type="button"
                   style={{
                     flex: 1, padding: '12px', borderRadius: '10px',
-                    border: paymentMethod === 'razorpay' ? '2.5px solid #CC7722' : '2px solid #DDD8CC',
-                    background: paymentMethod === 'razorpay' ? '#F9F7F3' : '#F9F8F5',
-                    color: paymentMethod === 'razorpay' ? '#CC7722' : '#454039',
+                    border: paymentMethod === 'razorpay' ? '2.5px solid #00A859' : '2px solid #E2E8F0',
+                    background: paymentMethod === 'razorpay' ? '#F0FDF4' : '#F8FAFC',
+                    color: paymentMethod === 'razorpay' ? '#00A859' : '#475569',
                     fontWeight: '700', cursor: 'pointer', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', gap: '8px',
                     fontFamily: "'Lato', sans-serif", fontSize: '14px', transition: 'all 0.2s'
@@ -510,9 +510,9 @@ const CustomerBookingForm = () => {
                   type="button"
                   style={{
                     flex: 1, padding: '12px', borderRadius: '10px',
-                    border: paymentMethod === 'cash' ? '2.5px solid #CC7722' : '2px solid #DDD8CC',
-                    background: paymentMethod === 'cash' ? '#F9F7F3' : '#F9F8F5',
-                    color: paymentMethod === 'cash' ? '#CC7722' : '#454039',
+                    border: paymentMethod === 'cash' ? '2.5px solid #00A859' : '2px solid #E2E8F0',
+                    background: paymentMethod === 'cash' ? '#F0FDF4' : '#F8FAFC',
+                    color: paymentMethod === 'cash' ? '#00A859' : '#475569',
                     fontWeight: '700', cursor: 'pointer', display: 'flex',
                     alignItems: 'center', justifyContent: 'center', gap: '8px',
                     fontFamily: "'Lato', sans-serif", fontSize: '14px', transition: 'all 0.2s'
