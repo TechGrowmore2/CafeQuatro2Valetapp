@@ -44,7 +44,8 @@ router.post('/create-order', async (req, res) => {
       customerEmail: String(customerEmail || notes.customerEmail || '').trim(),
       vehicleNumber: String(vehicleNumber || notes.vehicleNumber || '').trim().toUpperCase(),
       bookingNotes: String(bookingNotes || notes.bookingNotes || '').trim(),
-      paymentAmount: String(amount || 100)
+      paymentAmount: String(amount || 100),
+      appId: 'cafequatro2'  // Used by webhook to reject payments from other apps sharing this Razorpay account
     };
 
     const options = {
@@ -174,6 +175,14 @@ router.post('/webhook', async (req, res) => {
     if (!orderId) {
       console.warn('⚠️ Webhook: Missing order_id in payload');
       return res.json({ status: 'ignored', message: 'No order_id' });
+    }
+
+    // ===== APP IDENTITY CHECK =====
+    // Reject webhook events from other apps sharing this Razorpay account
+    // Each app stamps its own appId in order notes at create-order time
+    if (notes.appId && notes.appId !== 'cafequatro2') {
+      console.warn(`🚫 Webhook: Rejected — payment belongs to a different app (appId: ${notes.appId}), order: ${orderId}`);
+      return res.status(200).json({ status: 'ignored', message: 'Payment belongs to a different app' });
     }
 
     // ===== IN-MEMORY LOCK: Prevent race condition between webhook and redirect =====
