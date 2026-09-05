@@ -170,7 +170,6 @@ router.post('/webhook', async (req, res) => {
 
     const orderId = paymentEntity.order_id || orderEntity.id;
     const paymentId = paymentEntity.id || `pay_wh_${Date.now()}`;
-    const notes = paymentEntity.notes || orderEntity.notes || {};
 
     if (!orderId) {
       console.warn('⚠️ Webhook: Missing order_id in payload');
@@ -178,10 +177,23 @@ router.post('/webhook', async (req, res) => {
     }
 
     // ===== APP IDENTITY CHECK =====
-    // Reject webhook events from other apps sharing this Razorpay account
-    // Each app stamps its own appId in order notes at create-order time
+    // IMPORTANT: payment.captured events often have empty notes on the payment entity.
+    // Razorpay does NOT always copy order notes into the payment entity.
+    // We must fetch the order directly from Razorpay API to get authoritative notes with appId.
+    let notes = {};
+    try {
+      const rzpOrder = await razorpay.orders.fetch(orderId);
+      notes = rzpOrder.notes || {};
+      console.log(`📋 Webhook: Fetched order notes for ${orderId}:`, notes);
+    } catch (fetchErr) {
+      // Fallback to webhook payload notes if API fetch fails
+      console.warn(`⚠️ Webhook: Could not fetch order ${orderId} from Razorpay API, using payload notes:`, fetchErr.message);
+      notes = paymentEntity.notes || orderEntity.notes || {};
+    }
+
+    // Reject if appId is present and does not belong to this app
     if (notes.appId && notes.appId !== 'cafequatro2') {
-      console.warn(`🚫 Webhook: Rejected — payment belongs to a different app (appId: ${notes.appId}), order: ${orderId}`);
+      console.warn(`🚫 Webhook: Rejected — payment belongs to a different app (appId: '${notes.appId}'), order: ${orderId}`);
       return res.status(200).json({ status: 'ignored', message: 'Payment belongs to a different app' });
     }
 
