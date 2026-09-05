@@ -142,6 +142,8 @@ const bookingSchema = new mongoose.Schema({
 bookingSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
 
+  if (!this.payment) this.payment = {};
+
   // Sync paymentStatus ('paid'/'unpaid') and payment.status ('completed'/'pending'/'failed')
   if (this.paymentStatus === 'paid') {
     this.payment.status = 'completed';

@@ -403,17 +403,18 @@ router.put('/:id', auth, authorize('driver'), upload.array('carImages', 4), asyn
 
     // Mark as Complementary (FOC — Free of Charge) — only valid for cash bookings
     if (complementary === 'true' || complementary === true) {
-      booking.payment = {
-        ...booking.payment,
-        method: 'foc',
-        status: 'completed',
-        paidAt: new Date()
-      };
+      if (!booking.payment) booking.payment = {};
+      booking.payment.method = 'foc';
+      booking.payment.status = 'completed';
+      booking.payment.paidAt = new Date();
       booking.paymentStatus = 'paid';
       console.log(`Booking ${booking.bookingId} marked as complementary (FOC) by driver ${req.user.name}`);
     } else {
       // Payment
-      if (payment) booking.payment = { ...booking.payment, ...payment };
+      if (payment) {
+        if (!booking.payment) booking.payment = {};
+        Object.assign(booking.payment, payment);
+      }
       if (paymentStatus) booking.paymentStatus = paymentStatus;
     }
 

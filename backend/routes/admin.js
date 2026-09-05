@@ -589,28 +589,46 @@ router.patch('/bookings/:id/payment', auth, authorize('admin', 'manager'), async
     const VALID_METHODS  = ['cash', 'upi', 'card', 'razorpay', 'staff', 'foc', 'qr'];
     const VALID_STATUSES = ['unpaid', 'paid'];
 
-    const booking = await Booking.findById(req.params.id);
+    const update = {
+      $set: {
+        updatedAt: new Date()
+      }
+    };
+
+    if (paymentMethod && VALID_METHODS.includes(paymentMethod)) {
+      update.$set['payment.method'] = paymentMethod;
+      if (paymentMethod === 'foc') {
+        update.$set.paymentStatus = 'paid';
+        update.$set['payment.status'] = 'completed';
+        update.$set['payment.paidAt'] = new Date();
+      }
+    }
+
+    if (paymentStatus && VALID_STATUSES.includes(paymentStatus)) {
+      update.$set.paymentStatus = paymentStatus;
+      if (paymentStatus === 'paid') {
+        update.$set['payment.status'] = 'completed';
+        update.$set['payment.paidAt'] = new Date();
+      } else if (paymentStatus === 'unpaid') {
+        update.$set['payment.status'] = 'pending';
+      }
+    }
+
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      update,
+      { new: true }
+    ).populate('driver', 'name phone');
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
-
-    if (paymentMethod && VALID_METHODS.includes(paymentMethod)) {
-      booking.payment = { ...booking.payment, method: paymentMethod };
-      // FOC bookings are always marked paid
-      if (paymentMethod === 'foc') booking.paymentStatus = 'paid';
-    }
-    if (paymentStatus && VALID_STATUSES.includes(paymentStatus)) {
-      booking.paymentStatus = paymentStatus;
-    }
-
-    await booking.save();
-    await booking.populate('driver', 'name phone');
 
     console.log(`Admin updated payment for booking ${booking.bookingId}: method=${booking.payment?.method}, status=${booking.paymentStatus}`);
     res.json({ message: 'Payment updated successfully', booking });
   } catch (error) {
     console.error('Admin update payment error:', error);
-    res.status(500).json({ message: 'Failed to update payment' });
+    res.status(500).json({ message: 'Failed to update payment', error: error.message });
   }
 });
 
