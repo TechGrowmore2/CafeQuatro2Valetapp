@@ -121,25 +121,26 @@ const CustomerBookingForm = () => {
   const createBooking = async (paymentData) => {
     setBtnState('booking');
     try {
-      const data = new FormData();
-      data.append('driverPhone', driverPhone);
-      data.append('customerName', formData.customerPhone.trim());
-      data.append('customerPhone', formData.customerPhone.trim());
-      data.append('vehicleNumber', formData.vehicleNumber.trim().toUpperCase());
-      data.append('notes', '');
-      data.append('hasValuables', false);
-      data.append('valuables', JSON.stringify([]));
-      data.append('paymentMethod', paymentMethod);
-      data.append('pricingMode', pricingMode);
+      const payload = {
+        driverPhone,
+        customerName: formData.customerPhone.trim(),
+        customerPhone: formData.customerPhone.trim(),
+        vehicleNumber: formData.vehicleNumber.trim().toUpperCase(),
+        notes: '',
+        hasValuables: false,
+        valuables: [],
+        paymentMethod,
+        pricingMode,
+        paymentAmount,
+      };
       if (paymentData) {
-        data.append('razorpayOrderId', paymentData.orderId);
-        data.append('razorpayPaymentId', paymentData.paymentId);
-        data.append('razorpaySignature', paymentData.signature);
+        payload.razorpayOrderId = paymentData.orderId;
+        payload.razorpayPaymentId = paymentData.paymentId;
+        payload.razorpaySignature = paymentData.signature;
       }
-      data.append('paymentAmount', paymentAmount);
 
-      const res = await axios.post(`${API_URL}/api/bookings/public`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const res = await axios.post(`${API_URL}/api/bookings/public`, payload, {
+        headers: { 'Content-Type': 'application/json' }
       });
 
       setCreatedBookingId(res.data.booking.bookingId);
@@ -149,7 +150,11 @@ const CustomerBookingForm = () => {
       toast.success('Booking created!');
     } catch (err) {
       setBtnState('failed');
-      toast.error(err.response?.data?.message || 'Failed to create booking. Please try again.');
+      const msg = err.response?.data?.message
+        || err.response?.data?.errors?.[0]?.msg
+        || 'Failed to create booking. Please try again.';
+      console.error('createBooking error:', err.response?.data);
+      toast.error(msg);
     }
   };
 

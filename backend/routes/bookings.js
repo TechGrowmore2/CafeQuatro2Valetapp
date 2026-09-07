@@ -523,9 +523,11 @@ router.post('/public',
   ],
   async (req, res) => {
     try {
+      console.log('[public booking] req.body:', JSON.stringify(req.body));
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        console.error('[public booking] validation errors:', JSON.stringify(errors.array()));
+        return res.status(400).json({ message: errors.array().map(e => e.msg).join(', '), errors: errors.array() });
       }
 
       const {
