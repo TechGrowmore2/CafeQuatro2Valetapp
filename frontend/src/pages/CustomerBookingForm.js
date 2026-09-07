@@ -130,6 +130,7 @@ const CustomerBookingForm = () => {
       data.append('hasValuables', false);
       data.append('valuables', JSON.stringify([]));
       data.append('paymentMethod', paymentMethod);
+      data.append('pricingMode', pricingMode);
       if (paymentData) {
         data.append('razorpayOrderId', paymentData.orderId);
         data.append('razorpayPaymentId', paymentData.paymentId);
@@ -156,6 +157,15 @@ const CustomerBookingForm = () => {
   const handlePayAndBook = useCallback(async () => {
     if (!validate()) return;
     if (btnState === 'paying' || btnState === 'booking' || loading) return;
+
+    // ── PENDING (Tiered pricing): create booking directly, no upfront payment ──
+    if (paymentMethod === 'pending') {
+      setBtnState('booking');
+      setLoading(true);
+      await createBooking(null);
+      setLoading(false);
+      return;
+    }
 
     // ── CASH: create booking directly ──
     if (paymentMethod === 'cash') {
@@ -330,6 +340,13 @@ const CustomerBookingForm = () => {
             <div className="cbf-payment-success-badge">
               <ShieldCheck size={16} color="#10B981" />
               <span>Payment of ₹{paymentAmount} confirmed • {paymentIdDisplay}</span>
+            </div>
+          ) : paymentMethod === 'pending' ? (
+            <div className="cbf-payment-success-badge" style={{ backgroundColor: '#F0FDF4', borderColor: '#BBF7D0', color: '#166534' }}>
+              <ShieldCheck size={16} color="#16A34A" />
+              <span>
+                Your car is registered. <strong>Pay on exit</strong> via the customer portal link you'll receive on WhatsApp. (₹250 up to 2 hrs · ₹350 above 2 hrs)
+              </span>
             </div>
           ) : (
             <div className="cbf-payment-success-badge" style={{ backgroundColor: '#FEF3C7', borderColor: '#FDE68A', color: '#92400E' }}>
