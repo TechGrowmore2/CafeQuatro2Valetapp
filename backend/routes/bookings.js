@@ -261,7 +261,14 @@ router.get('/my-bookings', auth, authorize('driver'), async (req, res) => {
 
     const bookings = await Booking.find(query)
       .sort({ createdAt: -1 })
-      .populate('driver', 'name phone');
+      .populate({
+        path: 'driver',
+        select: 'name phone venue',
+        populate: {
+          path: 'venue',
+          select: 'name parkingFee pricingMode pricingTiers'
+        }
+      });
 
     console.log(`Found ${bookings.length} bookings for driver (status: ${status || 'active'}, range: ${from || ''} to ${to || ''})`);
     res.json({ bookings });
@@ -324,7 +331,14 @@ router.get('/customer-bookings', auth, authorize('customer'), async (req, res) =
   try {
     const bookings = await Booking.find({ 'customer.phone': req.user.phone })
       .sort({ createdAt: -1 })
-      .populate('driver', 'name phone');
+      .populate({
+        path: 'driver',
+        select: 'name phone venue',
+        populate: {
+          path: 'venue',
+          select: 'name parkingFee pricingMode pricingTiers'
+        }
+      });
 
     res.json({ bookings });
   } catch (error) {
@@ -337,7 +351,14 @@ router.get('/customer-bookings', auth, authorize('customer'), async (req, res) =
 router.get('/:id', async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate('driver', 'name phone');
+      .populate({
+        path: 'driver',
+        select: 'name phone venue',
+        populate: {
+          path: 'venue',
+          select: 'name parkingFee pricingMode pricingTiers'
+        }
+      });
 
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
@@ -367,7 +388,7 @@ router.put('/:id', auth, authorize('driver'), upload.array('carImages', 4), asyn
       customerName, vehicleNumber,
       notes, hasValuables, valuables,
       payment, paymentStatus, driverName,
-      complementary
+      complementary, paymentAmount, paymentMethod
     } = req.body;
 
     // Customer info
@@ -415,12 +436,73 @@ router.put('/:id', auth, authorize('driver'), upload.array('carImages', 4), asyn
         if (!booking.payment) booking.payment = {};
         Object.assign(booking.payment, payment);
       }
-      if (paymentStatus) booking.paymentStatus = paymentStatus;
+      if (paymentStatus) {
+        booking.paymentStatus = paymentStatus;
+        if (!booking.payment) booking.payment = {};
+        if (paymentStatus === 'paid') {
+          booking.payment.status = 'completed';
+          booking.payment.paidAt = new Date();
+          if (paymentMethod) {
+            booking.payment.method = paymentMethod;
+          } else if (!booking.payment.method || booking.payment.method === 'pending') {
+            booking.payment.method = 'cash';
+          }
+          if (paymentAmount) {
+            booking.payment.amount = Number(paymentAmount);
+          }
+          // Ensure verification OTP exists for customer handover
+          if (!booking.verification?.otp) {
+            booking.verification = booking.verification || {};
+            booking.verification.otp = Math.floor(100000 + Math.random() * 900000).toString();
+            booking.verification.otpExpiry = new Date(Date.now() + 60 * 60 * 1000);
+          }
+        } else if (paymentStatus === 'unpaid') {
+          booking.payment.status = 'pending';
+        }
+      }
     }
 
     await booking.save();
-    await booking.populate('driver', 'name phone');
+    await booking.populate({
+      path: 'driver',
+      select: 'name phone venue',
+      populate: {
+        path: 'venue',
+        select: 'name parkingFee pricingMode pricingTiers'
+      }
+    });
     console.log('Booking updated by driver:', booking.bookingId);
+
+    // Notify customer via socket if payment was marked received in cash
+    const io = req.app.get('io');
+    if (io) {
+      if (paymentStatus === 'paid') {
+        io.to(`customer-${booking.customer.phone}`).emit('payment-received-cash', {
+          bookingId: booking.bookingId,
+          otp: booking.verification?.otp,
+          amount: booking.payment?.amount,
+          paymentStatus: 'paid'
+        });
+      }
+      io.to(`customer-${booking.customer.phone}`).emit('booking-updated', {
+        bookingId: booking.bookingId
+      });
+    }
+
+    // If marked paid in cash, attempt sending WhatsApp handover OTP to customer
+    if (paymentStatus === 'paid' && booking.verification?.otp) {
+      try {
+        const whatsappService = require('../services/whatsappService');
+        whatsappService.sendArrivalNotification(
+          booking.customer.phone,
+          booking.bookingId,
+          booking.verification.otp
+        ).catch(err => console.error('WhatsApp cash OTP notification error:', err.message));
+      } catch (wsErr) {
+        console.error('WhatsApp service error:', wsErr.message);
+      }
+    }
+
     res.json({ message: 'Booking updated successfully', booking });
   } catch (error) {
     console.error('Update booking error:', error);

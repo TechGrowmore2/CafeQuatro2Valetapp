@@ -6,6 +6,7 @@ import { useSocket } from '../context/SocketContext';
 import toast from 'react-hot-toast';
 import { LogOut, Car, Clock, AlertCircle, CheckCircle, MapPin, CreditCard } from 'lucide-react';
 import api from '../services/api';
+import { getParkedDurationInfo, calculateBookingCharge } from '../services/pricing';
 import axios from 'axios';
 
 import './CustomerDashboard.css';
@@ -103,12 +104,28 @@ const CustomerDashboard = () => {
         toast.success('Booking completed! Thank you for using GrowMore');
         fetchBookings();
       };
+      const handlePaymentReceivedCash = (data) => {
+        toast.success(`💵 Cash payment of ₹${data.amount || ''} marked received by driver!`);
+        if (data.otp && data.bookingId) {
+          setPortalOTP(prev => ({ ...prev, [data.bookingId]: data.otp }));
+        }
+        fetchBookings();
+      };
+      const handleBookingUpdated = () => {
+        fetchBookings();
+      };
+
       on('car-in-transit', handleCarInTransit);
       on('car-arrived', handleCarArrived);
+      on('payment-received-cash', handlePaymentReceivedCash);
+      on('booking-updated', handleBookingUpdated);
       on('booking-completed', handleBookingCompleted);
+
       return () => {
         off('car-in-transit', handleCarInTransit);
         off('car-arrived', handleCarArrived);
+        off('payment-received-cash', handlePaymentReceivedCash);
+        off('booking-updated', handleBookingUpdated);
         off('booking-completed', handleBookingCompleted);
       };
     }
@@ -140,7 +157,7 @@ const CustomerDashboard = () => {
   };
 
   /* ─── Deferred payment handler for tiered-pricing venues ─── */
-  const handlePortalPay = useCallback(async (booking) => {
+  const handlePortalPay = useCallback(async (booking, overrideCharge) => {
     if (payingBookingId) return;
     setPayingBookingId(booking._id);
 
@@ -151,27 +168,8 @@ const CustomerDashboard = () => {
       return;
     }
 
-    // Determine amount based on tiers stored in booking or compute from elapsed time
-    // We fetch tiers from the booking's venue via driver info if available
-    let charge = booking.payment?.amount || 100;
-    // If it's a pending booking, we need to compute the charge
-    if (booking.paymentStatus === 'unpaid' && booking.payment?.method === 'pending') {
-      // Use booking's pricingTiers if available (stored in booking notes or fetch fresh)
-      // For now use a simple heuristic: re-fetch not needed, amount is computed client-side
-      // from the startTime vs tiers. We'll try to get tiers via driver API if we have driver phone.
-      const driverPhone = booking.driver?.phone;
-      if (driverPhone) {
-        try {
-          const res = await axios.get(`${API_URL}/api/auth/driver-info/${driverPhone}`);
-          if (res.data.pricingTiers && res.data.pricingTiers.length > 0) {
-            charge = computeTieredCharge(
-              booking.parking?.startTime || booking.createdAt,
-              res.data.pricingTiers
-            );
-          }
-        } catch (e) { console.error('Could not fetch driver tiers:', e.message); }
-      }
-    }
+    // Determine amount based on duration and tiered rules
+    let charge = overrideCharge || calculateBookingCharge(booking);
 
     // Create Razorpay order
     let orderData;
@@ -279,9 +277,16 @@ const CustomerDashboard = () => {
         ) : (
           <div className="bookings-grid">
             {bookings.map((booking, index) => {
-              const isPendingPayment = booking.paymentStatus === 'unpaid' && booking.payment?.method === 'pending';
+              const durationInfo = getParkedDurationInfo(
+                booking.parking?.startTime || booking.createdAt,
+                booking.parking?.actualEndTime || (booking.status === 'completed' ? booking.updatedAt : null)
+              );
+              const computedCharge = calculateBookingCharge(booking, durationInfo.totalMinutes);
+
+              // Booking is considered paid if paymentStatus is paid, or completed payment status, or cash payment marked, or portalOTP exists
+              const isPaid = booking.paymentStatus === 'paid' || booking.payment?.status === 'completed' || booking.payment?.method === 'foc' || !!portalOTP[booking._id];
               const isPayingThis = payingBookingId === booking._id;
-              const portalOTPForThis = portalOTP[booking._id];
+              const otpToShow = portalOTP[booking._id] || booking.verification?.otp;
 
               return (
               <motion.div
@@ -322,6 +327,13 @@ const CustomerDashboard = () => {
                     <Clock size={16} />
                     <span>Parked: {new Date(booking.parking?.startTime || booking.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
+                  {/* Real-time Parked Duration */}
+                  <div className="detail-row" style={{ background: '#F8FAFC', padding: '6px 10px', borderRadius: '8px', marginTop: '4px' }}>
+                    <Clock size={16} color="#64748B" />
+                    <span style={{ fontSize: '13px', color: '#334155' }}>
+                      Parked Duration: <strong style={{ color: '#1E293B' }}>{durationInfo.text}</strong>
+                    </span>
+                  </div>
                   {booking.location?.venue && (
                     <div className="detail-row">
                       <MapPin size={16} />
@@ -337,42 +349,49 @@ const CustomerDashboard = () => {
                   </div>
                 )}
 
-                {/* OTP from driver arrival (existing flow) */}
-                {booking.status === 'arrived' && booking.verification?.otp && !portalOTPForThis && (
-                  <div className="otp-banner">
-                    <AlertCircle size={22} color="#F59E0B" />
-                    <div>
-                      <span>Show this OTP to driver</span>
-                      <strong>{booking.verification.otp}</strong>
-                    </div>
-                  </div>
-                )}
-
-                {/* OTP after portal payment (tiered pricing) */}
-                {portalOTPForThis && (
+                {/* Prominent Handover OTP: shown when payment is confirmed (cash or Razorpay) or when car has arrived */}
+                {(isPaid || booking.status === 'arrived') && otpToShow && (
                   <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     style={{
                       background: 'linear-gradient(135deg, #00A859, #008F4C)',
                       borderRadius: '14px',
                       padding: '18px 20px',
-                      margin: '12px 0',
+                      margin: '14px 0',
                       textAlign: 'center',
                       color: 'white',
                       boxShadow: '0 6px 24px rgba(0, 168, 89, 0.3)'
                     }}
                   >
-                    <p style={{ fontSize: '13px', margin: '0 0 6px', opacity: 0.9 }}>✅ Payment confirmed! Show this OTP to driver</p>
-                    <p style={{ fontSize: '36px', fontWeight: 900, letterSpacing: '0.2em', margin: '0', fontFamily: 'monospace' }}>
-                      {portalOTPForThis}
+                    <p style={{ fontSize: '13px', margin: '0 0 6px', opacity: 0.95, fontWeight: 600 }}>
+                      {booking.payment?.method === 'cash' ? '💵 Cash payment received! Show this OTP to driver:' : '✅ Payment confirmed! Show this OTP to driver:'}
                     </p>
-                    <p style={{ fontSize: '11px', margin: '6px 0 0', opacity: 0.8 }}>OTP also sent to your WhatsApp</p>
+                    <p style={{ fontSize: '38px', fontWeight: 900, letterSpacing: '0.25em', margin: '4px 0', fontFamily: 'monospace' }}>
+                      {otpToShow}
+                    </p>
+                    <p style={{ fontSize: '12px', margin: '6px 0 0', opacity: 0.9 }}>
+                      Show this OTP to the driver to complete your handover
+                    </p>
                   </motion.div>
                 )}
 
-                {/* Pay Parking Charges button — only for pending-payment tiered bookings */}
-                {isPendingPayment && !portalOTPForThis && (
+                {/* Paid confirmation badge */}
+                {isPaid && booking.status !== 'completed' && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    background: '#ECFDF5', border: '1.5px solid #A7F3D0',
+                    padding: '8px 12px', borderRadius: '10px',
+                    color: '#065F46', fontSize: '13px', fontWeight: 700,
+                    margin: '8px 0'
+                  }}>
+                    <CheckCircle size={17} color="#059669" />
+                    <span>Paid: ₹{booking.payment?.amount || computedCharge} via {(booking.payment?.method || 'CASH').toUpperCase()}</span>
+                  </div>
+                )}
+
+                {/* Pay with Razorpay option — REMOVED when driver marks cash payment or when booking is already paid */}
+                {!isPaid && booking.status !== 'completed' && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -381,14 +400,14 @@ const CustomerDashboard = () => {
                       border: '1.5px solid #FDE68A',
                       borderRadius: '14px',
                       padding: '14px 16px',
-                      margin: '12px 0 4px',
+                      margin: '12px 0 6px',
                     }}
                   >
                     <p style={{ fontSize: '13px', color: '#92400E', margin: '0 0 10px', fontWeight: 600 }}>
-                      💳 Parking charges due. Pay securely via Razorpay to get your handover OTP.
+                      💳 Parking charges due: <strong>₹{computedCharge}</strong> ({durationInfo.text}). Pay securely via Razorpay to receive your handover OTP.
                     </p>
                     <button
-                      onClick={() => handlePortalPay(booking)}
+                      onClick={() => handlePortalPay(booking, computedCharge)}
                       disabled={isPayingThis}
                       style={{
                         width: '100%', padding: '13px',
@@ -402,32 +421,21 @@ const CustomerDashboard = () => {
                       }}
                     >
                       <CreditCard size={18} />
-                      {isPayingThis ? 'Opening payment…' : 'Pay Parking Charges'}
+                      {isPayingThis ? 'Opening payment…' : `Pay ₹${computedCharge} with Razorpay`}
                     </button>
                   </motion.div>
                 )}
 
-                {booking.status === 'parked' && !isPendingPayment && (
+                {booking.status === 'parked' && (
                   <button className="recall-btn" onClick={() => handleRecallCar(booking._id)}>
                     🚗 Call for Car
-                  </button>
-                )}
-
-                {/* Allow recall even for pending-payment bookings */}
-                {booking.status === 'parked' && isPendingPayment && (
-                  <button
-                    className="recall-btn"
-                    style={{ marginTop: '8px', background: 'linear-gradient(135deg, #64748B, #475569)' }}
-                    onClick={() => handleRecallCar(booking._id)}
-                  >
-                    🚗 Call for Car (Pay first recommended)
                   </button>
                 )}
 
                 {booking.status === 'completed' && (
                   <div className="completed-banner">
                     <CheckCircle size={19} />
-                    <span>Completed · ₹{booking.payment?.amount || 0} · {booking.payment?.method?.toUpperCase()}</span>
+                    <span>Completed · ₹{booking.payment?.amount || computedCharge} · {(booking.payment?.method || 'CASH').toUpperCase()}</span>
                   </div>
                 )}
               </motion.div>

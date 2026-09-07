@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Car, Clock, Phone, MapPin, AlertCircle, Pencil, X, Check, User, Copy } from 'lucide-react';
 import api from '../services/api';
+import { getParkedDurationInfo, calculateBookingCharge } from '../services/pricing';
 import './MyBookings.css';
 
 const valuableOptions = ['Laptop', 'Phone', 'Wallet', 'Gift', 'Snacks', 'Charger', 'HeadPhone'];
@@ -50,7 +51,7 @@ const saveRecentDriver = (name) => {
    EDIT MODAL
    ============================================================ */
 const EditBookingModal = ({ booking, onClose, onSaved }) => {
-  const isCashBooking = booking.payment?.method === 'cash';
+  const isCashBooking = booking.payment?.method === 'cash' || booking.payment?.method === 'pending';
 
   const [form, setForm] = useState({
     customerName:  booking.customer?.name  || '',
