@@ -38,13 +38,16 @@ const CustomerBookingForm = () => {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [disclaimerChecked, setDisclaimerChecked] = useState(false);
 
-  const [paymentAmount, setPaymentAmount] = useState(100);
-  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // razorpay | cash | pending
+  const [paymentAmount, setPaymentAmount] = useState(250);
+  const [paymentMethod, setPaymentMethod] = useState('pending'); // razorpay | cash | pending
   const [btnState, setBtnState] = useState('idle'); // idle | paying | booking | failed
-  const [venueName, setVenueName] = useState('');
-  const [venueLoading, setVenueLoading] = useState(true);
-  const [pricingMode, setPricingMode] = useState('flat');   // 'flat' | 'tiered'
-  const [pricingTiers, setPricingTiers] = useState([]);     // [{ maxHours, charge, label }]
+  const [venueName, setVenueName] = useState('Cafe Quattro Babulnath');
+  const [venueLoading, setVenueLoading] = useState(false);
+  const [pricingMode, setPricingMode] = useState('tiered');   // 'flat' | 'tiered'
+  const [pricingTiers, setPricingTiers] = useState([
+    { maxHours: 2, charge: 250, label: '0–2 hrs' },
+    { maxHours: null, charge: 350, label: '2+ hrs' }
+  ]);
 
   // Fetch driver name + venue parking fee & check pending booking
   useEffect(() => {
@@ -66,7 +69,13 @@ const CustomerBookingForm = () => {
           setPricingTiers(res.data.pricingTiers);
         }
       } catch {
-        setDriverName('Your Valet Driver');
+        setDriverName('Cafe Quattro Valet Driver');
+        setPricingMode('tiered');
+        setPricingTiers([
+          { maxHours: 2, charge: 250, label: '0–2 hrs' },
+          { maxHours: null, charge: 350, label: '2+ hrs' }
+        ]);
+        setPaymentMethod('pending');
       } finally {
         setVenueLoading(false);
       }
@@ -398,11 +407,25 @@ const CustomerBookingForm = () => {
                 <p style={{ margin: '0 0 8px' }}>Valet services are provided for your convenience. While every care is taken, <strong>Cafe Quattro Babulnath cannot be responsible for theft or damage to the vehicle.</strong></p>
                 <p style={{ margin: '0 0 8px' }}>Please ensure <strong>valuable items are safe with you</strong>, outside the car.</p>
                 <p style={{ margin: '0 0 8px' }}>Please allow us <strong>15 mins</strong> to bring the vehicle back to you.</p>
-                {pricingMode === 'tiered' && pricingTiers.length > 0 && (
-                  <p style={{ margin: '8px 0', padding: '10px 14px', background: '#FEF3C7', borderRadius: '10px', border: '1px solid #FDE68A', color: '#92400E', fontWeight: 600 }}>
-                    🅿️ Parking charges: {pricingTiers.map((t, i) => `${t.label} ₹${t.charge}`).join(' · ')} — Pay on exit via the link sent to your WhatsApp.
+                <div style={{
+                  margin: '12px 0',
+                  padding: '12px 14px',
+                  background: '#FEF3C7',
+                  borderRadius: '10px',
+                  border: '1.5px solid #FCD34D',
+                  color: '#92400E'
+                }}>
+                  <p style={{ margin: '0 0 6px', fontWeight: 800, fontSize: '13.5px' }}>
+                    🅿️ Parking Charges:
                   </p>
-                )}
+                  <p style={{ margin: 0, fontSize: '13px', fontWeight: 700, color: '#78350F' }}>
+                    • Up to 2 hours (0–2 hrs): <strong>₹250</strong><br />
+                    • Above 2 hours (2+ hrs): <strong>₹350</strong>
+                  </p>
+                  <p style={{ margin: '6px 0 0', fontSize: '11.5px', color: '#B45309' }}>
+                    Charges apply based on parked duration. Pay securely on exit via customer portal link.
+                  </p>
+                </div>
                 <p style={{ margin: 0, fontWeight: 700, color: '#00A859' }}>Hope you enjoy your meal! 🍽️</p>
               </div>
 
@@ -544,31 +567,28 @@ const CustomerBookingForm = () => {
             </div>
             )}
 
-            {/* Tiered Pricing Info — shown instead of payment method toggle */}
+            {/* Tiered Pricing Info — minimal text */}
             {pricingMode === 'tiered' && (
               <div style={{
-                background: '#EFF6FF',
-                border: '1.5px solid #BFDBFE',
-                borderRadius: '14px',
-                padding: '16px 18px',
+                background: '#F0FDF4',
+                border: '1.5px solid #BBF7D0',
+                borderRadius: '12px',
+                padding: '12px 16px',
                 marginTop: '12px',
                 marginBottom: '8px',
-                color: '#1E40AF',
-                fontSize: '13.5px',
-                lineHeight: '1.65',
+                color: '#166534',
+                fontSize: '13px',
+                lineHeight: '1.5'
               }}>
-                <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '14px' }}>🅿️ Parking Charges</p>
-                {pricingTiers.length > 0 ? (
-                  pricingTiers.map((tier, i) => (
-                    <p key={i} style={{ margin: '2px 0' }}>
-                      <strong>{tier.label}</strong> — ₹{tier.charge}
-                    </p>
-                  ))
-                ) : (
-                  <p style={{ margin: 0 }}>Charges apply based on duration.</p>
-                )}
-                <p style={{ margin: '10px 0 0', fontSize: '12.5px', color: '#3B82F6', fontWeight: 600 }}>
-                  💳 Pay securely via the link sent to your WhatsApp when collecting your car.
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 800, fontSize: '13.5px' }}>🅿️ Parking Charges:</span>
+                  <span style={{ fontSize: '11px', background: '#DCFCE7', color: '#15803D', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>Pay on Exit</span>
+                </div>
+                <p style={{ margin: '2px 0', fontWeight: 700, fontSize: '13.5px' }}>
+                  0–2 hrs: <strong>₹250</strong> &nbsp;·&nbsp; 2+ hrs: <strong>₹350</strong>
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#15803D', opacity: 0.9 }}>
+                  No upfront payment needed. Pay securely via Razorpay when collecting your car.
                 </p>
               </div>
             )}

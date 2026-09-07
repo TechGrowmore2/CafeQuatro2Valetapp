@@ -262,12 +262,8 @@ router.get('/driver-info/:phone', async (req, res) => {
     const driver = await User.findOne({ phone: req.params.phone, role: 'driver', isActive: true })
       .populate('venue', 'name parkingFee requiresUpfrontPayment pricingMode pricingTiers');
 
-    if (!driver) {
-      return res.status(404).json({ message: 'Driver not found' });
-    }
-
-    let venueObj = driver.venue;
-    if (!venueObj && driver.supervisor) {
+    let venueObj = driver ? driver.venue : null;
+    if (!venueObj && driver && driver.supervisor) {
       venueObj = await Venue.findOne({ supervisor: driver.supervisor });
     }
     if (!venueObj) {
@@ -275,12 +271,15 @@ router.get('/driver-info/:phone', async (req, res) => {
     }
 
     res.json({
-      name: driver.name,
-      parkingFee: venueObj?.parkingFee ?? 100,
-      venueName: venueObj?.name || null,
-      requiresUpfrontPayment: venueObj?.requiresUpfrontPayment ?? true,
-      pricingMode: venueObj?.pricingMode || 'flat',
-      pricingTiers: venueObj?.pricingTiers || []
+      name: driver ? driver.name : 'Cafe Quattro Valet Driver',
+      parkingFee: venueObj?.parkingFee ?? 250,
+      venueName: venueObj?.name || 'Cafe Quattro Babulnath',
+      requiresUpfrontPayment: venueObj?.requiresUpfrontPayment ?? false,
+      pricingMode: venueObj?.pricingMode || 'tiered',
+      pricingTiers: venueObj?.pricingTiers && venueObj.pricingTiers.length > 0 ? venueObj.pricingTiers : [
+        { maxHours: 2, charge: 250, label: '0–2 hrs' },
+        { maxHours: null, charge: 350, label: '2+ hrs' }
+      ]
     });
   } catch (error) {
     console.error('Driver info error:', error);
