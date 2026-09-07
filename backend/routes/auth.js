@@ -260,7 +260,7 @@ router.get('/driver-info/:phone', async (req, res) => {
   try {
     const Venue = require('../models/Venue');
     const driver = await User.findOne({ phone: req.params.phone, role: 'driver', isActive: true })
-      .populate('venue', 'name parkingFee requiresUpfrontPayment');
+      .populate('venue', 'name parkingFee requiresUpfrontPayment pricingMode pricingTiers');
 
     if (!driver) {
       return res.status(404).json({ message: 'Driver not found' });
@@ -278,7 +278,9 @@ router.get('/driver-info/:phone', async (req, res) => {
       name: driver.name,
       parkingFee: venueObj?.parkingFee ?? 100,
       venueName: venueObj?.name || null,
-      requiresUpfrontPayment: venueObj?.requiresUpfrontPayment ?? true
+      requiresUpfrontPayment: venueObj?.requiresUpfrontPayment ?? true,
+      pricingMode: venueObj?.pricingMode || 'flat',
+      pricingTiers: venueObj?.pricingTiers || []
     });
   } catch (error) {
     console.error('Driver info error:', error);

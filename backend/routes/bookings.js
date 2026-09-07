@@ -30,7 +30,7 @@ router.post('/',
     body('vehicleNumber').trim().isLength({ min: 4 }).withMessage('Vehicle number must be at least 4 characters'),
     body('parkingSpot').optional().trim(),
     body('venue').optional().trim(),
-    body('paymentMethod').optional().isIn(['cash', 'upi', 'staff', 'foc']).withMessage('Invalid payment method'),
+    body('paymentMethod').optional().isIn(['cash', 'upi', 'staff', 'foc', 'pending']).withMessage('Invalid payment method'),
     body('paymentAmount').optional().isFloat({ min: 0 }).withMessage('Invalid payment amount')
   ],
   async (req, res) => {
@@ -453,7 +453,7 @@ router.post('/public',
         paymentMethod
       } = req.body;
 
-      const isRazorpay = !paymentMethod || paymentMethod === 'razorpay';
+      const isRazorpay = paymentMethod === 'razorpay' || (!paymentMethod && !!(razorpayOrderId && razorpayPaymentId && razorpaySignature));
 
       // ===== Razorpay Payment Verification (if selected) =====
       if (isRazorpay) {
@@ -580,6 +580,11 @@ router.post('/public',
           paymentId: razorpayPaymentId,
           signature: razorpaySignature
         }
+      } : paymentMethod === 'pending' ? {
+        // Tiered-pricing venue: customer pays at trip-end via customer portal
+        method: 'pending',
+        amount: 0,
+        status: 'pending'
       } : {
         method: 'cash',
         amount: parsedAmount,

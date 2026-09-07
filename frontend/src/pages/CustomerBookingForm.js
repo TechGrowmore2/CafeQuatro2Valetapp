@@ -39,10 +39,12 @@ const CustomerBookingForm = () => {
   const [disclaimerChecked, setDisclaimerChecked] = useState(false);
 
   const [paymentAmount, setPaymentAmount] = useState(100);
-  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // razorpay | cash
+  const [paymentMethod, setPaymentMethod] = useState('razorpay'); // razorpay | cash | pending
   const [btnState, setBtnState] = useState('idle'); // idle | paying | booking | failed
   const [venueName, setVenueName] = useState('');
   const [venueLoading, setVenueLoading] = useState(true);
+  const [pricingMode, setPricingMode] = useState('flat');   // 'flat' | 'tiered'
+  const [pricingTiers, setPricingTiers] = useState([]);     // [{ maxHours, charge, label }]
 
   // Fetch driver name + venue parking fee & check pending booking
   useEffect(() => {
@@ -53,6 +55,16 @@ const CustomerBookingForm = () => {
         setDriverName(res.data.name || 'Your Valet Driver');
         if (res.data.parkingFee !== undefined) setPaymentAmount(res.data.parkingFee);
         if (res.data.venueName) setVenueName(res.data.venueName);
+        if (res.data.pricingMode) {
+          setPricingMode(res.data.pricingMode);
+          if (res.data.pricingMode === 'tiered') {
+            // Tiered venues: no upfront payment — customer pays at trip-end via portal
+            setPaymentMethod('pending');
+          }
+        }
+        if (res.data.pricingTiers && res.data.pricingTiers.length > 0) {
+          setPricingTiers(res.data.pricingTiers);
+        }
       } catch {
         setDriverName('Your Valet Driver');
       } finally {
@@ -265,6 +277,7 @@ const CustomerBookingForm = () => {
   const getBtnLabel = () => {
     if (btnState === 'paying') return <><div className="cbf-spinner-ring" style={{ width: 18, height: 18, borderWidth: 2 }} /> Opening Payment Gateway…</>;
     if (btnState === 'booking') return <><div className="cbf-spinner-ring" style={{ width: 18, height: 18, borderWidth: 2 }} /> Creating Your Booking…</>;
+    if (pricingMode === 'tiered') return <>🚗 Register &amp; Park — Pay on Exit</>;
     if (paymentMethod === 'razorpay') return <><CreditCard size={20} /> Pay ₹{paymentAmount} &amp; Create Booking</>;
     return <>🚗 Create Booking</>;
   };
@@ -385,6 +398,11 @@ const CustomerBookingForm = () => {
                 <p style={{ margin: '0 0 8px' }}>Valet services are provided for your convenience. While every care is taken, <strong>Cafe Quattro Babulnath cannot be responsible for theft or damage to the vehicle.</strong></p>
                 <p style={{ margin: '0 0 8px' }}>Please ensure <strong>valuable items are safe with you</strong>, outside the car.</p>
                 <p style={{ margin: '0 0 8px' }}>Please allow us <strong>15 mins</strong> to bring the vehicle back to you.</p>
+                {pricingMode === 'tiered' && pricingTiers.length > 0 && (
+                  <p style={{ margin: '8px 0', padding: '10px 14px', background: '#FEF3C7', borderRadius: '10px', border: '1px solid #FDE68A', color: '#92400E', fontWeight: 600 }}>
+                    🅿️ Parking charges: {pricingTiers.map((t, i) => `${t.label} ₹${t.charge}`).join(' · ')} — Pay on exit via the link sent to your WhatsApp.
+                  </p>
+                )}
                 <p style={{ margin: 0, fontWeight: 700, color: '#00A859' }}>Hope you enjoy your meal! 🍽️</p>
               </div>
 
@@ -487,7 +505,8 @@ const CustomerBookingForm = () => {
               <div className="cbf-fee-badge">Admin set</div>
             </div>
 
-            {/* Payment Method Toggle */}
+            {/* Payment Method Toggle — only shown for flat-pricing venues */}
+            {pricingMode !== 'tiered' && (
             <div className="cbf-field" style={{ marginTop: '16px', marginBottom: '16px' }}>
               <label>Select Payment Option</label>
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
@@ -523,6 +542,36 @@ const CustomerBookingForm = () => {
                 </button>
               </div>
             </div>
+            )}
+
+            {/* Tiered Pricing Info — shown instead of payment method toggle */}
+            {pricingMode === 'tiered' && (
+              <div style={{
+                background: '#EFF6FF',
+                border: '1.5px solid #BFDBFE',
+                borderRadius: '14px',
+                padding: '16px 18px',
+                marginTop: '12px',
+                marginBottom: '8px',
+                color: '#1E40AF',
+                fontSize: '13.5px',
+                lineHeight: '1.65',
+              }}>
+                <p style={{ margin: '0 0 8px', fontWeight: 700, fontSize: '14px' }}>🅿️ Parking Charges</p>
+                {pricingTiers.length > 0 ? (
+                  pricingTiers.map((tier, i) => (
+                    <p key={i} style={{ margin: '2px 0' }}>
+                      <strong>{tier.label}</strong> — ₹{tier.charge}
+                    </p>
+                  ))
+                ) : (
+                  <p style={{ margin: 0 }}>Charges apply based on duration.</p>
+                )}
+                <p style={{ margin: '10px 0 0', fontSize: '12.5px', color: '#3B82F6', fontWeight: 600 }}>
+                  💳 Pay securely via the link sent to your WhatsApp when collecting your car.
+                </p>
+              </div>
+            )}
 
             {/* Cash info note */}
             {paymentMethod === 'cash' && (

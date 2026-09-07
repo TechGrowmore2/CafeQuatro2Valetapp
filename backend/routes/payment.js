@@ -196,6 +196,14 @@ router.post('/webhook', async (req, res) => {
       console.warn(`🚫 Webhook: Rejected — payment belongs to a different app (appId: '${notes.appId}'), order: ${orderId}`);
       return res.status(200).json({ status: 'ignored', message: 'Payment belongs to a different app' });
     }
+    // ===== DEFERRED PAYMENT CHECK =====
+    // If this webhook has no booking details (driverPhone, customerPhone, vehicleNumber)
+    // it's a payment from the customer portal for an EXISTING booking (tiered pricing).
+    // The booking already exists — just return OK, the /booking-pay endpoint already handled it.
+    if (!notes.driverPhone && !notes.customerPhone && !notes.vehicleNumber) {
+      console.log(`⏭ Webhook: Skipping order ${orderId} — deferred portal payment for existing booking (no booking details in notes)`);
+      return res.status(200).json({ status: 'ignored', message: 'Deferred payment handled by booking-pay endpoint' });
+    }
 
     // ===== IN-MEMORY LOCK: Prevent race condition between webhook and redirect =====
     // If another request is currently creating a booking for this orderId, wait for it
@@ -353,6 +361,98 @@ router.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('Razorpay Webhook Error:', error);
     return res.status(200).json({ status: 'error', error: error.message });
+  }
+});
+
+
+// POST /api/payment/booking-pay/:bookingId
+// Tiered-pricing deferred payment: Customer pays via Razorpay on the customer portal.
+// Verifies payment, updates booking, generates & sends OTP for handover verification.
+router.post('/booking-pay/:bookingId', async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing payment verification fields' });
+    }
+
+    // Verify Razorpay signature
+    const secret = process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET_HERE';
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(body)
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      console.error('booking-pay: Razorpay signature mismatch for booking:', bookingId);
+      return res.status(400).json({ success: false, message: 'Payment verification failed' });
+    }
+
+    // Find the booking
+    const booking = await Booking.findById(bookingId).populate('driver', 'name phone');
+    if (!booking) {
+      return res.status(404).json({ success: false, message: 'Booking not found' });
+    }
+
+    if (booking.paymentStatus === 'paid') {
+      return res.status(200).json({ success: true, message: 'Payment already recorded', alreadyPaid: true });
+    }
+
+    // Calculate parking duration and determine tier charge
+    const paidAmount = amount ? parseFloat(amount) : 0;
+
+    // Generate OTP for handover verification
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Update booking with payment details and OTP
+    booking.payment.method = 'razorpay';
+    booking.payment.amount = paidAmount;
+    booking.payment.status = 'completed';
+    booking.payment.paidAt = new Date();
+    booking.payment.razorpay = {
+      orderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      signature: razorpay_signature
+    };
+    booking.paymentStatus = 'paid';
+    booking.verification.otp = otp;
+    booking.verification.otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    await booking.save();
+    console.log(`✓ booking-pay: Payment recorded for booking ${booking.bookingId}, amount ₹${paidAmount}, OTP generated`);
+
+    // Send OTP via WhatsApp and SMS
+    try {
+      await whatsappService.sendArrivalNotification(booking.customer.phone, booking.bookingId, otp);
+      console.log('✓ booking-pay: OTP WhatsApp sent to:', booking.customer.phone);
+    } catch (e) { console.error('booking-pay: WhatsApp OTP failed:', e.message); }
+
+    try {
+      await smsService.sendArrivalNotification(booking.customer.phone, booking.bookingId, otp);
+      console.log('✓ booking-pay: OTP SMS sent to:', booking.customer.phone);
+    } catch (e) { console.error('booking-pay: SMS OTP failed:', e.message); }
+
+    // Notify driver via socket that payment is complete
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`driver-${booking.driver._id}`).emit('booking-payment-received', {
+        bookingId: booking.bookingId,
+        booking: booking.toObject()
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      otp,
+      bookingId: booking.bookingId,
+      amount: paidAmount,
+      message: 'Payment recorded. OTP sent to your WhatsApp.'
+    });
+  } catch (error) {
+    console.error('booking-pay error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to process payment', error: error.message });
   }
 });
 

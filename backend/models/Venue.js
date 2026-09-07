@@ -27,6 +27,21 @@ const venueSchema = new mongoose.Schema({
     default: 100,
     min: 0
   },
+  // ── Tiered Pricing ──────────────────────────────────────────
+  // pricingMode: 'flat' uses parkingFee as-is.
+  // 'tiered' uses pricingTiers for duration-based charges.
+  // Booking form hides Razorpay for 'tiered' venues;
+  // customer pays at trip-end via the customer portal.
+  pricingMode: {
+    type: String,
+    enum: ['flat', 'tiered'],
+    default: 'flat'
+  },
+  pricingTiers: [{
+    maxHours: { type: Number, default: null }, // null = "beyond previous tier"
+    charge: { type: Number, required: true },
+    label: { type: String, trim: true }        // e.g. "0–2 hrs", "2+ hrs"
+  }],
   isActive: {
     type: Boolean,
     default: true
@@ -38,3 +53,4 @@ const venueSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Venue', venueSchema);
+
