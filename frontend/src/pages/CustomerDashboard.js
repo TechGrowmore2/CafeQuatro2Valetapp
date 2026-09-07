@@ -390,8 +390,8 @@ const CustomerDashboard = () => {
                   </div>
                 )}
 
-                {/* Pay with Razorpay option — REMOVED when driver marks cash payment or when booking is already paid */}
-                {!isPaid && booking.status !== 'completed' && (
+                {/* ── Pay with Razorpay: only when car has ARRIVED (duration is final) ── */}
+                {!isPaid && booking.status === 'arrived' && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -399,13 +399,22 @@ const CustomerDashboard = () => {
                       background: '#FEF3C7',
                       border: '1.5px solid #FDE68A',
                       borderRadius: '14px',
-                      padding: '14px 16px',
+                      padding: '16px 18px',
                       margin: '12px 0 6px',
                     }}
                   >
-                    <p style={{ fontSize: '13px', color: '#92400E', margin: '0 0 10px', fontWeight: 600 }}>
-                      💳 Parking charges due: <strong>₹{computedCharge}</strong> ({durationInfo.text}). Pay securely via Razorpay to receive your handover OTP.
-                    </p>
+                    <div style={{ marginBottom: '10px' }}>
+                      <p style={{ fontSize: '13.5px', color: '#92400E', margin: '0 0 4px', fontWeight: 700 }}>
+                        🚗 Your car has arrived! Please complete payment.
+                      </p>
+                      <p style={{ fontSize: '13px', color: '#78350F', margin: 0 }}>
+                        Parked for <strong>{durationInfo.text}</strong> →
+                        {' '}Charges: <strong style={{ fontSize: '16px' }}>₹{computedCharge}</strong>
+                        {computedCharge === 250
+                          ? ' (0–2 hrs rate)'
+                          : ' (2+ hrs rate)'}
+                      </p>
+                    </div>
                     <button
                       onClick={() => handlePortalPay(booking, computedCharge)}
                       disabled={isPayingThis}
@@ -424,6 +433,22 @@ const CustomerDashboard = () => {
                       {isPayingThis ? 'Opening payment…' : `Pay ₹${computedCharge} with Razorpay`}
                     </button>
                   </motion.div>
+                )}
+
+                {/* Info notice for parked/in-transit — payment happens on arrival */}
+                {!isPaid && ['parked', 'recall-requested', 'in-transit'].includes(booking.status) && (
+                  <div style={{
+                    background: '#F0FDF4', border: '1.5px solid #BBF7D0',
+                    borderRadius: '12px', padding: '10px 14px',
+                    margin: '10px 0 4px', color: '#166534',
+                    fontSize: '12.5px', display: 'flex', gap: '8px', alignItems: 'flex-start'
+                  }}>
+                    <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '1px', color: '#16A34A' }} />
+                    <span>
+                      <strong>Pay on exit.</strong> Payment via Razorpay will be prompted when your car arrives.
+                      Charges: ₹250 (0–2 hrs) · ₹350 (2+ hrs).
+                    </span>
+                  </div>
                 )}
 
                 {booking.status === 'parked' && (
